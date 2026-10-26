@@ -109,6 +109,9 @@ JSON body posted:
 { "source": "brad-board", "event": "ask-now", "openAskIds": ["t007", "..."], "at": "ISO", "reason": "button|ask-saved" }
 ```
 
+
+Button traffic goes through Supabase edge `?api=wake` (forwards to the webhook) so GitHub Pages is not blocked by Cursor CORS.
+
 Headers when a key is saved: `Authorization: Bearer <key>` and `X-Automation-Key: <key>`.
 
 ### Backup: weekday cron
