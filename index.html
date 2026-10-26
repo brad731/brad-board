@@ -1,0 +1,2442 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brad's Board</title>
+<style>
+:root{--bg:#0A0A0A;--card:#121212;--col:#0F0F0F;--bd:#262626;--ac:#3B82F6;--tx:#EDEDED;--mu:#8A8A8A;--r:8px}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--tx);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--bd);flex-wrap:wrap}
+h1{font-size:18px;margin:0;font-weight:650;letter-spacing:-.01em}
+h1 span{color:var(--mu);font-weight:400;font-size:13px;margin-left:8px}
+.sp{flex:1}
+button,.btn{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:var(--r);padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+button:hover,.btn:hover{border-color:#3a3a3a;background:#171717}
+button.primary{background:var(--ac);border-color:var(--ac);color:#fff}button.primary:hover{background:#2f6fd9}
+button.ghost{background:transparent}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.seg button{border:none;border-radius:0;background:var(--card);padding:7px 14px}
+.seg button.on{background:var(--ac);color:#fff}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--bd);background:#0c0c0c}
+.toolbar .label{font-size:11px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-right:2px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px solid var(--bd);background:var(--card);font-size:12px;cursor:pointer;color:var(--tx);user-select:none}
+.chip .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.chip.on{border-color:var(--ac);background:rgba(59,130,246,.14);color:#fff}
+.chip.toggle.on{border-color:#22C55E;background:rgba(34,197,94,.12)}
+.chip .n{color:var(--mu)}
+.chip.exit{border-style:dashed}
+.filters{display:flex;gap:6px;flex-wrap:wrap;padding:10px 20px;border-bottom:1px solid var(--bd)}
+.pipe-bar{display:none;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--bd);background:rgba(59,130,246,.06)}
+.pipe-bar.show{display:flex}
+.pipe-bar h2{margin:0;font-size:15px;font-weight:600}
+.pipe-bar h2 .hint{color:var(--mu);font-weight:400;font-size:12px;margin-left:8px}
+main{flex:1;display:flex;gap:12px;padding:16px 20px;overflow-x:auto;align-items:flex-start}
+.col{flex:0 0 290px;background:var(--col);border:1px solid var(--bd);border-radius:var(--r);display:flex;flex-direction:column;max-height:calc(100vh - 210px)}
+.col h2{font-size:13px;margin:0;padding:12px 12px 10px;display:flex;align-items:center;gap:8px;font-weight:600;border-bottom:1px solid var(--bd)}
+.col h2 .cnt{color:var(--mu);font-weight:400;background:#1a1a1a;border-radius:999px;padding:0 8px;font-size:12px}
+.col h2 .add{margin-left:auto;padding:0 8px;font-size:16px;line-height:22px;border:none;background:none;color:var(--mu)}
+.col h2 .add:hover{color:var(--tx)}
+.col.urgent{border-color:#EF4444;flex-basis:330px}.col.urgent h2{color:#FCA5A5}
+.col.todo h2{color:#93C5FD}.col.doing h2{color:#FCD34D}.col.delegating h2{color:#D8B4FE}
+.col.not_urgent h2{color:#9CA3AF}.col.done h2{color:#86EFAC}
+.list{padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:80px;flex:1}
+.list.over{background:rgba(59,130,246,.06);outline:1px dashed var(--ac);outline-offset:-4px;border-radius:var(--r)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:10px 11px;cursor:grab;position:relative}
+.card:hover{border-color:#3a3a3a}.card.dragging{opacity:.4}
+.card .top{display:flex;gap:8px;align-items:flex-start}
+.tick{flex:0 0 18px;height:18px;border-radius:50%;border:1.5px solid #4a4a4a;margin-top:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:none;padding:0}
+.tick:hover{border-color:var(--ac)}
+.card.isdone .tick{background:#22C55E;border-color:#22C55E}
+.card.isdone .tick::after{content:"";width:5px;height:9px;border:solid #0A0A0A;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.card.isdone .title{color:var(--mu);text-decoration:line-through}
+.title{font-weight:560;font-size:13.5px;flex:1;padding-right:28px}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0;align-items:center}
+.tag{font-size:11px;padding:2px 8px;border-radius:999px;font-weight:550}
+.stage{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+.stage-urgent{background:rgba(239,68,68,.16);color:#FCA5A5;border:1px solid rgba(239,68,68,.4)}
+.stage-todo{background:rgba(59,130,246,.16);color:#93C5FD;border:1px solid rgba(59,130,246,.35)}
+.stage-doing{background:rgba(245,158,11,.14);color:#FCD34D;border:1px solid rgba(245,158,11,.35)}
+.stage-delegating{background:rgba(168,85,247,.14);color:#D8B4FE;border:1px solid rgba(168,85,247,.35)}
+.stage-not_urgent{background:rgba(107,114,128,.14);color:#9CA3AF;border:1px solid rgba(107,114,128,.35)}
+.stage-done{background:rgba(34,197,94,.14);color:#86EFAC;border:1px solid rgba(34,197,94,.35)}
+.due{font-size:11px;padding:2px 8px;border-radius:999px;background:#1c1c1c;border:1px solid var(--bd);color:#cfcfcf}
+.due.soon{background:rgba(239,68,68,.14);border-color:#5b2323;color:#FCA5A5}
+.due.today{background:#EF4444;border-color:#EF4444;color:#fff}
+.note{color:#B5B5B5;font-size:12.5px;margin-top:7px}
+.src{color:#666;font-size:11px;margin-top:7px;word-break:break-word}
+.card-tools{position:absolute;top:6px;right:6px;display:flex;gap:4px;opacity:0}
+.card:hover .card-tools,.card.menu-open .card-tools{opacity:1}
+.card-tools button{border:none;background:#1c1c1c;padding:2px 7px;font-size:12px;border-radius:6px;color:var(--mu)}
+.card-tools button:hover{color:var(--tx);background:#252525}
+.menu{position:absolute;top:30px;right:6px;background:#161616;border:1px solid var(--bd);border-radius:var(--r);min-width:160px;padding:4px;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.menu button{display:block;width:100%;text-align:left;border:none;background:none;color:var(--tx);padding:7px 10px;font-size:12px;border-radius:6px}
+.menu button:hover{background:#222}
+.menu .sep{height:1px;background:var(--bd);margin:4px 0}
+.menu .lab{font-size:10px;color:var(--mu);padding:6px 10px 2px;text-transform:uppercase;letter-spacing:.04em}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:10}
+.overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--bd);border-radius:12px;width:min(520px,92vw);padding:20px}
+.modal h3{margin:0 0 14px;font-size:16px}
+.modal label{display:block;font-size:12px;color:var(--mu);margin:10px 0 4px}
+.modal input,.modal select,.modal textarea{width:100%;background:#0d0d0d;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);padding:8px 10px;font:inherit;font-size:13px}
+.modal textarea{min-height:70px;resize:vertical}
+.row{display:flex;gap:10px}.row>div{flex:1}
+.actions{display:flex;gap:8px;margin-top:16px}.actions .sp{flex:1}
+button.danger{color:#FCA5A5}
+.search{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);color:var(--tx);padding:7px 10px;font:inherit;font-size:13px;width:200px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#262626;border-radius:8px}
+.empty{color:var(--mu);font-size:12px;padding:16px 8px;text-align:center}
+
+.ask-badge{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:650;background:rgba(251,191,36,.16);color:#FCD34D;border:1px solid rgba(251,191,36,.45);letter-spacing:.02em}
+.ask-badge.answered{background:rgba(45,212,191,.14);color:#5EEAD4;border-color:rgba(45,212,191,.45)}
+.ask-open{border-color:rgba(251,191,36,.55);box-shadow:inset 0 0 0 1px rgba(251,191,36,.12)}
+.ask-answered{border-color:rgba(45,212,191,.45);box-shadow:inset 0 0 0 1px rgba(45,212,191,.1)}
+.ask-preview{margin-top:7px;padding:7px 9px;border-radius:6px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.28);font-size:12px;color:#FDE68A}
+.ask-preview.answered{background:rgba(45,212,191,.08);border-color:rgba(45,212,191,.28);color:#99F6E4}
+.ask-preview .lab{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#B45309;margin-bottom:2px;font-weight:650}
+.ask-preview.answered .lab{color:#0F766E}
+.ask-preview .ans{margin-top:6px;padding-top:6px;border-top:1px solid rgba(45,212,191,.22);color:#CCFBF1;font-size:12px}
+.tip{font-size:11.5px;color:var(--mu);padding:0 20px 8px;border-bottom:1px solid var(--bd);background:#0c0c0c}
+.tip b{color:#5EEAD4;font-weight:550}
+.sync-pill{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--mu)}
+.sync-pill.ok{color:#86EFAC;border-color:rgba(34,197,94,.45)}
+.sync-pill.busy{color:#FCD34D;border-color:rgba(251,191,36,.4)}
+.sync-pill.err{color:#FCA5A5;border-color:rgba(239,68,68,.4)}
+.modal.ask-modal textarea{min-height:90px}
+.ask-answer-box{margin-top:12px;padding:10px 12px;border-radius:8px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.28);font-size:13px;color:#CCFBF1;white-space:pre-wrap}
+.ask-answer-box .lab{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#0F766E;margin-bottom:4px;font-weight:650}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head><body>
+<header>
+ <h1>Brad's Board <span id="sub"></span></h1>
+ <div class="sp"></div>
+ <span class="sync-pill busy" id="syncPill">Connecting…</span>
+ <input class="search" id="q" placeholder="Search cards…">
+ <div class="seg" id="viewSeg">
+  <button type="button" data-view="board" class="on">Board</button>
+  <button type="button" data-view="pipeline">Pipeline</button>
+ </div>
+ <button class="primary" id="addBtn">+ Add card</button>
+ <button id="expBtn">Export JSON</button>
+ <label class="btn">Import JSON<input type="file" id="imp" accept=".json,application/json" hidden></label>
+ <button id="resetBtn" title="Reload board from live server">Reload live</button>
+</header>
+<div class="tip"><b>Live sync on</b> — Ask stays on the card; answers appear here when Brad OS writes them. Bookmark this HTTPS link.</div>
+<div class="toolbar" id="toggles">
+ <span class="label">Show</span>
+ <span class="chip toggle on" data-tog="hideDone">Hide completed</span>
+ <span class="chip toggle" data-tog="showParked">Show parked</span>
+</div>
+<div class="filters" id="filters"></div>
+<div class="pipe-bar" id="pipeBar">
+ <h2 id="pipeTitle">Pipeline</h2>
+ <div class="sp"></div>
+ <button class="ghost" id="exitPipe">← Back to Board</button>
+</div>
+<main id="board"></main>
+<div class="overlay" id="ov"><div class="modal">
+ <h3 id="mt">Edit card</h3>
+ <label>Title</label><input id="f_title">
+ <div class="row"><div><label>Project</label><select id="f_project"></select></div>
+ <div><label>Column / Stage</label><select id="f_column"></select></div></div>
+ <div class="row"><div><label>Due date</label><input id="f_due" type="date"></div>
+ <div><label>Due (text, if no exact date)</label><input id="f_dueText" placeholder="e.g. Nov 2026"></div></div>
+ <label>Note</label><textarea id="f_note"></textarea>
+ <label>Source</label><input id="f_source">
+ <div class="actions"><button class="danger" id="delBtn">Delete</button><div class="sp"></div><button id="canBtn">Cancel</button><button class="primary" id="saveBtn">Save</button></div>
+</div></div>
+<div class="overlay" id="askOv"><div class="modal ask-modal">
+ <h3 id="askMt">Ask Brad OS</h3>
+ <p style="margin:0 0 8px;font-size:12px;color:var(--mu)" id="askCardTitle"></p>
+ <label>Your question</label>
+ <textarea id="f_ask" placeholder="Ask Brad OS…"></textarea>
+ <div id="askAnswerBox" class="ask-answer-box" style="display:none"><div class="lab">Answer</div><div id="askAnswerText"></div></div>
+ <div class="actions">
+  <button class="danger" id="askClearBtn" style="display:none">Clear ask</button>
+  <div class="sp"></div>
+  <button id="askCanBtn">Cancel</button>
+  <button class="primary" id="askSaveBtn">Save ask</button>
+ </div>
+</div></div>
+<script id="seed" type="application/json">{
+  "version": 16,
+  "generated": "2026-10-26T17:20:00Z",
+  "projects": {
+    "money": {
+      "name": "Money & Deadlines",
+      "color": "#EF4444"
+    },
+    "car": {
+      "name": "Car & Legal",
+      "color": "#F59E0B"
+    },
+    "kitchen": {
+      "name": "Kitchen AI",
+      "color": "#10B981"
+    },
+    "agency": {
+      "name": "Agency (My Business Blueprint)",
+      "color": "#14B8A6"
+    },
+    "vault": {
+      "name": "Vault & Hermes",
+      "color": "#3B82F6"
+    },
+    "taki": {
+      "name": "Taki Moore Brain",
+      "color": "#8B5CF6"
+    },
+    "monzo": {
+      "name": "Monzo Assistant",
+      "color": "#EC4899"
+    },
+    "bodydrop": {
+      "name": "BodyDrop (wind-down)",
+      "color": "#F97316"
+    },
+    "tcbb": {
+      "name": "Coaches Blueprint",
+      "color": "#06B6D4"
+    },
+    "family": {
+      "name": "Family & Home",
+      "color": "#A3E635"
+    },
+    "personal": {
+      "name": "Personal",
+      "color": "#94A3B8"
+    },
+    "parked": {
+      "name": "Founding Five / Someday",
+      "color": "#6B7280"
+    },
+    "growthopia": {
+      "name": "Growthopia",
+      "color": "#F43F5E"
+    },
+    "brooke": {
+      "name": "Brooke Ads",
+      "color": "#D946EF"
+    }
+  },
+  "columns": [
+    {
+      "id": "urgent",
+      "name": "Urgent"
+    },
+    {
+      "id": "todo",
+      "name": "To do"
+    },
+    {
+      "id": "doing",
+      "name": "Doing"
+    },
+    {
+      "id": "delegating",
+      "name": "Delegating"
+    },
+    {
+      "id": "not_urgent",
+      "name": "Not urgent"
+    },
+    {
+      "id": "done",
+      "name": "Done"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t001",
+      "column": "done",
+      "project": "kitchen",
+      "title": "Kitchen AI call with Gavin (19 Oct) \u2014 done, deal moving",
+      "note": "Call happened. Gavin accepted / deal moving on 16-week build. Cleared 26 Oct from Brad.",
+      "source": "KitchenAI-pitch-process.md; Google Calendar",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t002",
+      "column": "not_urgent",
+      "project": "kitchen",
+      "title": "Set the build price before the call",
+      "note": "Call was 19 Oct (passed). The offer doc's investment page has no number yet. Once you pick it, it goes on all 3 payment options (in full at a discount, 2 payments, 4 monthly).",
+      "source": "KitchenAI-pitch-process.md (Commercial section)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t003",
+      "column": "urgent",
+      "project": "car",
+      "title": "Check Land Rover insurance \u2014 renewal was ~22 Oct",
+      "note": "Cheapest Confused.com quote was \u00a3828.68. Due ~22 Oct \u2014 confirm renewed or car is still insured. Renew/switch if not.",
+      "source": "urgency-child-car-2026-10-09.md; open-loops.md top 10 #6",
+      "due": "2026-10-22",
+      "dueText": "Check today",
+      "done": false,
+      "order": null
+    },
+    {
+      "id": "t004",
+      "column": "urgent",
+      "project": "money",
+      "title": "HMRC \u00a3400 late-filing penalty (covered by Time to Pay call)",
+      "note": "Same call as t049. Notice 23 Sep, due 23 Oct \u2014 overdue. Do not appeal unless Maria says otherwise. Ref 4482621021A00101A.",
+      "source": "HMRC CT211; Tia 15 Oct; BodyDrop Emails 26 Oct; Viktor export 26 Oct",
+      "due": "2026-10-23",
+      "dueText": "Overdue",
+      "done": false,
+      "order": null
+    },
+    {
+      "id": "t005",
+      "column": "urgent",
+      "project": "money",
+      "title": "Pay Zilch \u00a3675 or agree a plan",
+      "note": "Formal default notice dated 29 Sep, ref C00623411. Same \u00a3675 as credit-file item (not a second debt). Pay \u00a3675 or agree a plan by 29 Oct, otherwise default on credit file. Personal account can cover. Get any arrangement in writing.",
+      "source": "finances/state.md; open-loops.md top 10 #2; Monzo read-only check, 19 Oct; Viktor export 26 Oct",
+      "due": "2026-10-29",
+      "dueText": "Thu 29 Oct",
+      "done": false,
+      "order": 5
+    },
+    {
+      "id": "t006",
+      "column": "done",
+      "project": "money",
+      "title": "Admiral \u00a372.54 \u2014 paid 20 Oct",
+      "note": "Paid 20 Oct 03:09 from joint Bills pot after two bounced DDs on 6 Oct. Confirm cover is live and whose policy (Kaylee?).",
+      "source": "Monzo joint, 20 Oct; deep-brief-2026-10-25.md",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t007",
+      "column": "urgent",
+      "project": "bodydrop",
+      "title": "BodyDrop Monzo: fund Skool retries or cancel AAS Plus",
+      "note": "Was: move ~\u00a3130 so Claude Code Club / AI Employee Lab / AAS Plus can retry. Due date 21 Oct passed \u2014 confirm which Skool groups still need saving vs cancel. Also see t080 dormancy.",
+      "source": "Skool emails + Monzo read-only, 21 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false,
+      "order": null
+    },
+    {
+      "id": "t008",
+      "column": "urgent",
+      "project": "bodydrop",
+      "title": "Google Workspace (BodyDrop) \u00a390.80 \u2014 stop further declines",
+      "note": "Declined 3x (again 1 Oct). Another lapse risks more senders bouncing (Skool already silent since 3 Jun). Fix card or pause Workspace.",
+      "source": "Monzo read-only check, 19 Oct; business/bodydrop/state.md",
+      "due": null,
+      "dueText": "This week",
+      "done": false,
+      "order": null
+    },
+    {
+      "id": "t009",
+      "column": "done",
+      "project": "money",
+      "title": "Skool: Launch Lab payment went through",
+      "note": "Merged into the Skool top-up card. Payment succeeded on retry.",
+      "source": "Monzo read-only check, 19 Oct; open-loops.md (Finances)",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t010",
+      "column": "done",
+      "project": "monzo",
+      "title": "RemotePro \u00a3100 \u2014 paid 16 Oct",
+      "note": "Went through 16 Oct after same-minute SCA fail. No new charge since.",
+      "source": "Monzo; deep-brief-2026-10-25.md",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t011",
+      "column": "urgent",
+      "project": "family",
+      "title": "CMS: call 0800 171 2345 before Wed court (liability order)",
+      "note": "Hearing Wed 28 Oct 2026 10:00 North Somerset Magistrates. Arrears \u00a3720.07 + \u00a3300 charge = \u00a31,020.07. Ref 121042963321. Accept \u00a3720.07, ask payment plan, ask them to withdraw application so \u00a3300 may be avoided. Not a CCJ but can hit Register of Judgments. Attendance not required if uncontested.",
+      "source": "CMS letter 1 Oct + summons; BodyDrop Emails 26 Oct; Viktor export 26 Oct",
+      "due": "2026-10-28",
+      "dueText": "Wed 10am",
+      "done": false,
+      "order": 4
+    },
+    {
+      "id": "t012",
+      "column": "urgent",
+      "project": "car",
+      "title": "Call Oodle (01865 475060) about the arrears notice",
+      "note": "Open the 'Repeat Notice Of Sums In Arrears' PDF for the amount, then call Oodle 01865 475060. Keep engine complaint (L04) separate from finance payments. Biggest credit-file item \u2014 protect it. Confirm what's actually been paid (also Zable \u00a3968.97 Sept statement).",
+      "source": "urgency-child-car-2026-10-09.md; finances/state.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false,
+      "order": null
+    },
+    {
+      "id": "t013",
+      "column": "urgent",
+      "project": "money",
+      "title": "Revolut: answer 'provide information' to restore receiving",
+      "note": "Restricted since 29 Sep \u2014 account cannot receive money until info supplied. Open Revolut app \u2192 'We need some more info' tile, complete checks, confirm which account + receiving details. Done = app shows receiving restored, or support case + review date logged.",
+      "source": "bradley-email-findings-2026-10-08.md #5; intake/brad-os-slack-deep-2026-10-08.md; Viktor export 26 Oct",
+      "due": "2026-10-01",
+      "dueText": "Overdue",
+      "done": false
+    },
+    {
+      "id": "t014",
+      "column": "urgent",
+      "project": "bodydrop",
+      "title": "Companies House \u00a3750 BodyDrop: ask for monthly instalments",
+      "note": "FINAL notice overdue (pay-by was 13 Oct). Broke \u2014 do NOT pay online (full amount only). Email enquiries@companieshouse.gov.uk for monthly instalments. Co no 13321082, penalty ref A2006287. Phone 0303 1234 500.",
+      "source": "AOY Tom post 12 Oct; BodyDrop Emails 26 Oct; Viktor export 26 Oct",
+      "due": "2026-10-26",
+      "dueText": "Overdue \u2014 today",
+      "done": false,
+      "order": 2
+    },
+    {
+      "id": "t015",
+      "column": "todo",
+      "project": "money",
+      "title": "Companies House: ID verification + confirmation statement (My Business Blueprint)",
+      "note": "Company 16798725. Confirmation statement due 3 Nov 2026 needs director verification. Separate PSC verification notice \u2014 check its own deadline. Codes stay out of Slack.",
+      "source": "business/my-business-blueprint/state.md; open-loops.md top 10 #5; Viktor export 26 Oct",
+      "due": "2026-11-03",
+      "dueText": "Mon 3 Nov",
+      "done": false
+    },
+    {
+      "id": "t016",
+      "column": "done",
+      "project": "kitchen",
+      "title": "Send Gavin the owed items \u2014 not needed",
+      "note": "Brad confirmed 26 Oct: GHL Loom / Pixel+CAPI / invite no longer needed.",
+      "source": "business/my-business-blueprint/state.md; kitchen-ai-gavin-draft-2026-10-09.md",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t017",
+      "column": "todo",
+      "project": "monzo",
+      "title": "Amazon Prime is billing a closed card",
+      "note": "Failed on 16 Oct. Update the card or cancel Prime. | ASK ANSWERED 26 Oct: permanent \u2014 update card or cancel Prime. Amazon order also declined same card.",
+      "source": "Monzo read-only check, 19 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "ask": {
+        "text": "is this just a failed payment or a permenant problem",
+        "at": "2026-10-26T16:03:49.972Z",
+        "status": "answered",
+        "answeredAt": "2026-10-26T16:36:00.000Z",
+        "answer": "Permanent problem, not a one-off. Prime is still trying to charge a closed Monzo card, so every renewal will keep failing until you update the card or cancel Prime. First failure was 16 Oct. Amazon also emailed brad@bodydrop.co.uk on 26 Oct (Payment declined \u2014 update your information so we can ship your order), so at least one order is on hold for the same card. Next: Amazon \u2192 Your Account \u2192 Payment options \u2192 live card on Prime + held order, or cancel Prime."
+      }
+    },
+    {
+      "id": "t018",
+      "column": "urgent",
+      "project": "money",
+      "title": "Accounting On You invoices: pay what you can / confirm balances",
+      "note": "Accountant FEES not HMRC. Viktor 30 Sep statement across 4 cos: Bully \u00a3105, Rixfy \u00a3105, BodyDrop \u00a33,160, Coaches Blueprint \u00a31,035 (=\u00a34,405). Fresh packs 12 Oct; \u00a3100 paid 14 Oct. Reconcile since, ask Evie for current statement + working Stripe link, agree instalments.",
+      "source": "Evie OVERDUE INVOICES; BodyDrop Emails 26 Oct; Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false,
+      "order": null
+    },
+    {
+      "id": "t019",
+      "column": "urgent",
+      "project": "money",
+      "title": "Send Maria: MyBlueprint statements + income + roles (for PAYE)",
+      "note": "Tax return 25/26 already approved (Maria filing). Still need: bank statements, average personal monthly income, and roles for you + Kaylee before \u00a31,047.50 each PAYE. Also answer remaining catch-up questions (maternity/UC/childcare) if still open.",
+      "source": "Maria catch-up 8\u201313 Oct; Hannah 21 Oct; BodyDrop Emails 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false
+    },
+    {
+      "id": "t020",
+      "column": "todo",
+      "project": "car",
+      "title": "SJS Legal JLR DPF claim: submit evidence",
+      "note": "Ref 184638.001. Fill in their form and email the finance agreement, invoices and garage/diagnostic reports to DPFRepairs@sjs-legal.co.uk. It's the same pack as Oodle.",
+      "source": "urgency-child-car-2026-10-09.md; open-loops.md top 10 #7",
+      "due": null,
+      "dueText": "Nov 2026",
+      "done": false
+    },
+    {
+      "id": "t021",
+      "column": "todo",
+      "project": "car",
+      "title": "Oodle complaint: genuine independent engineer report",
+      "note": "Oodle final response 30 Sep (case 02818614): declined \u2014 no independent evidence of cause. Send it to existing FOS case (13 Sep referral 02343668) and get acknowledgement. Book independent engineering assessment; request repair records; find advert/warranty docs. FOS deadline marker ~30 Mar 2027 (6 months).",
+      "source": "urgency-child-car-2026-10-09.md; open-loops.md top 10 #8; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t022",
+      "column": "urgent",
+      "project": "personal",
+      "title": "Phoenix: Help With Fees call for Pelican House (deposit claim)",
+      "note": "Alan Curran, Phoenix Legal: 0151 306 3694 / ac@phoenixlegalsolicitors.co.uk. Case ref latest 106039.001 (older 106040.001). Have ready privately: both NI numbers, 3 months income, savings, dependants, benefits. Issue fee \u00a3387 (pay now, recover later = firm process). Done = HWF done and Phoenix confirms issue + court ref. LATER: send original email threads + Kaylee WhatsApp ZIP with voice notes + dated index (does not block issue).",
+      "source": "bradley-email-findings-2026-10-08.md; bradley-claude-findings-2026-10-08.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false
+    },
+    {
+      "id": "t023",
+      "column": "todo",
+      "project": "vault",
+      "title": "Turn on GitHub two-factor login",
+      "note": "First of your next 3 actions in the Hermes guide. There's also an unrecognised GitHub notice from 8 Oct to check. About 10 minutes.",
+      "source": "hermes-setup-guide.html (Next 3 actions); open-loops.md",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t024",
+      "column": "todo",
+      "project": "agency",
+      "title": "RefinedBy: owed items (Looms, GPT, Skool copy)",
+      "note": "Still on board (Brad unsure 26 Oct). Loom on FB ID verification, simplified model + Loom, life-audit GPT, Skool page copy. Nareman call happened; still working. Viktor Fri 2 Oct call-confirm card superseded by Nareman 22 Oct call (happened). Still unsure on Looms/GPT/Skool copy.",
+      "source": "business/my-business-blueprint/state.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t025",
+      "column": "done",
+      "project": "agency",
+      "title": "RefinedBy + Medlin receipts \u2014 already sent",
+      "note": "Brad confirmed 26 Oct already sent. Was $13k each; no further action. Viktor Medlin receipt chase closed by Brad 26 Oct. | Brad: done 26 Oct.",
+      "source": "business/my-business-blueprint/state.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t026",
+      "column": "done",
+      "project": "money",
+      "title": "BCP council tax + Dukes bailiffs: status, 3 balances, written plan",
+      "note": "Refs 603594440, 603670707, 603643470. 27 Aug thread: recall Dukes + affordable plan; Simon Tanner unreplied. Kaylee authority was the blocker. Dukes asked \u00a3158.61/mo; you offered \u00a35/mo 20 Jul. Confirm enforcement status + written plan. | Brad: already handled 26 Oct.",
+      "source": "finances/state.md; open-loops.md top 10 #9; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t027",
+      "column": "todo",
+      "project": "money",
+      "title": "Debts: Shire AAL00071421, Lantern/Lowell, Monzo Flex",
+      "note": "Shire Recoveries: call 01827 300326, case AAL00071421 (authority letter sent 12 Sep; they asked for call 15 Sep). Lantern M8750799 \u00a31,277.50 (29 Sep) + Lending Stream M8791652 \u00a3590.86 (July \u2014 check current). Lowell DD ref 484487467 was due 8 Oct \u2014 confirm amount/account and that money was there. Monzo Flex arrears (20 Aug). Match original creditor vs collector so nothing counts twice.",
+      "source": "finances/state.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t028",
+      "column": "todo",
+      "project": "car",
+      "title": "Bell Automotive \u00a3126 invoice: confirm paid",
+      "note": "INV-1864, due 29 Aug. Bell's evidence is part of the case.",
+      "source": "urgency-child-car-2026-10-09.md; finances/state.md",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t029",
+      "column": "todo",
+      "project": "agency",
+      "title": "GoHighLevel agency plan: keep or cancel",
+      "note": "$596.40/mo; hosts BodyDrop, Brooke and Core Five. One check says \u00a3451.89 went through on 14 Oct, another says it failed.",
+      "source": "business/my-business-blueprint/state.md; Monzo read-only check, 19 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t030",
+      "column": "done",
+      "project": "kitchen",
+      "title": "Gavin follow-up message draft \u2014 scrapped",
+      "note": "Brad said scrap 26 Oct. Not sending.",
+      "source": "kitchen-ai-gavin-draft-2026-10-09.md",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t031",
+      "column": "delegating",
+      "project": "vault",
+      "title": "Step 1: push the vault to private GitHub",
+      "note": "Push the draft vault on Grok Bot's computer to brad731/brad-vault. You approve the GitHub sign-in.",
+      "source": "hermes-setup-guide.html Phase 3",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t032",
+      "column": "delegating",
+      "project": "vault",
+      "title": "Step 2: clone to Mac ~/brad-vault + Obsidian Git",
+      "note": "Copy the vault to the Mac, open it in Obsidian, and add the Git plugin so edits auto-sync.",
+      "source": "hermes-setup-guide.html Phase 4",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t033",
+      "column": "delegating",
+      "project": "vault",
+      "title": "Step 3: Claude setup tidy",
+      "note": "Keep all 46 global skills and tidy the rest. You approve each change.",
+      "source": "hermes-setup-guide.html Phase 6",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t034",
+      "column": "delegating",
+      "project": "monzo",
+      "title": "Switch on the declined-payment check + monthly review",
+      "note": "Daily check for declined or failed payments, plus a monthly spending review. Read-only. Monzo needs re-approving in the app about every 90 days.",
+      "source": "Chat 19 Oct (offer not yet answered)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t035",
+      "column": "delegating",
+      "project": "taki",
+      "title": "Say when to build the Taki Moore brain agent",
+      "note": "Built from the private course capture (61 lessons, ~1,500 frames, 66 PDFs). Kept off the GitHub vault.",
+      "source": "taki-moore/progress.md",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t036",
+      "column": "not_urgent",
+      "project": "vault",
+      "title": "Claude full export zip",
+      "note": "Only the manifest reached Downloads. You may need to re-click the export link or request a new export.",
+      "source": "Task list (claude-export); open-loops.md (System/AI)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t037",
+      "column": "not_urgent",
+      "project": "vault",
+      "title": "ChatGPT fresh export",
+      "note": "Waiting for OpenAI's export email. Grab it when it arrives.",
+      "source": "Task list (chatgpt-fresh-export)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t038",
+      "column": "done",
+      "project": "kitchen",
+      "title": "Kitchen AI: Gavin said yes to the 16-week build",
+      "note": "Confirmed by Brad 26 Oct. Proposal v2 path \u2014 he is in.",
+      "source": "open-loops.md (MBB, Claude memory); KitchenAI-pitch-process.md",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t039",
+      "column": "not_urgent",
+      "project": "taki",
+      "title": "12 Taki overview videos not captured",
+      "note": "They only play inside the members' site. Option: ask Taki's team for downloads, or add your own notes.",
+      "source": "taki-moore/progress.md",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t040",
+      "column": "not_urgent",
+      "project": "vault",
+      "title": "Fill in Hermes SOUL.md",
+      "note": "15 minutes; a voice note is fine. Hermes reads it first.",
+      "source": "hermes-setup-guide.html Phase 7",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t041",
+      "column": "not_urgent",
+      "project": "vault",
+      "title": "Build the Pinecone search index",
+      "note": "Built from the vault, rebuildable, never the source of truth. Comes after steps 1 to 3.",
+      "source": "hermes-setup-guide.html Phase 9; bradley-next-steps-2026-10-08.md",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t042",
+      "column": "not_urgent",
+      "project": "vault",
+      "title": "Point Hermes at the vault + Telegram + nightly log",
+      "note": "Update Hermes and connect it to the vault.",
+      "source": "hermes-setup-guide.html Phase 8",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t043",
+      "column": "not_urgent",
+      "project": "vault",
+      "title": "Connect Hermes tools",
+      "note": "Only what it needs: NotebookLM, Gmail, Calendar.",
+      "source": "hermes-setup-guide.html Phase 10",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t044",
+      "column": "not_urgent",
+      "project": "vault",
+      "title": "Always-on Hermes (laptop closed)",
+      "note": "Start on the Mac. Later: Hetzner server (~\u00a36/mo) or Hermes Cloud (~$0.56/day, third-party figure).",
+      "source": "hermes-setup-guide.html Phase 11",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t045",
+      "column": "not_urgent",
+      "project": "vault",
+      "title": "Transcribe Jack's Skool course, Level 6+",
+      "note": "Feeds the Hermes build.",
+      "source": "business/my-business-blueprint/state.md; Task list (skool-jack-transcribe)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t046",
+      "column": "not_urgent",
+      "project": "taki",
+      "title": "Build the Taki Moore brain agent",
+      "note": "Uses the 61 lesson write-ups. Only the first 9 have verbatim transcripts; the rest are summaries.",
+      "source": "taki-moore/progress.md",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t047",
+      "column": "not_urgent",
+      "project": "money",
+      "title": "Business tools: keep / fix / cancel failed renewals",
+      "note": "Failed/at risk: Viktor $200 (check referral credits), Bits \u00a310, Basecamp $15, GHL $10 unsupported card, earlier Make/ChatGPT/Lovable, Skool payment emails. Million Dollar Coach + Laurel Portie invoices do not prove unpaid debt. Do not cut anything a client depends on. Also personal: Boards \u00a39.99, MEGA \u00a38.99, YouTube \u00a316.99, Tony Robbins AI \u00a339 (late Oct renewals).",
+      "source": "finances/state.md; open-loops.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t048",
+      "column": "not_urgent",
+      "project": "money",
+      "title": "Check the $8,275 owed via Stripe arrived",
+      "note": "From 4 Jun (USD).",
+      "source": "open-loops.md (Finances)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t049",
+      "column": "urgent",
+      "project": "money",
+      "title": "HMRC Time to Pay: Coaches Blueprint CT (~\u00a36k) + \u00a3400 penalty",
+      "note": "CT ~\u00a35,826.96 + interest ~\u00a3238.79 (Sep estimate; growing) + \u00a3400 late-filing penalty (due 23 Oct passed; Tia said pay it). Call 0300 200 3840 or gov.uk/difficulties-paying-hmrc. Ref 4482621021A00101A. Sort 08-32-10 acct 12001039 HMRC Cumbernauld. Interest still runs on a plan. Covers t004. Viktor: get current balance + payment ref via Zia; accounts filed 23 Sep (done). Keep separate from accountant fees.",
+      "source": "Zia 10 Sep; Tia 15 Oct; HMRC CT211 via Tom; BodyDrop Emails 26 Oct; Viktor export 26 Oct",
+      "due": "2026-10-27",
+      "dueText": "This week",
+      "done": false,
+      "order": 3
+    },
+    {
+      "id": "t050",
+      "column": "not_urgent",
+      "project": "bodydrop",
+      "title": "BodyDrop: dormant or shut down?",
+      "note": "Accounting On You asked on 8 Oct. This decision drives the rest of BodyDrop.",
+      "source": "business/bodydrop/state.md",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t051",
+      "column": "not_urgent",
+      "project": "bodydrop",
+      "title": "Clearpay (CRS) + BT/AJJB collector plans: match to debits",
+      "note": "Clearpay \u00a3294 (23 Sep) ref CPSO00057549, \u00a310 due 28 Sep \u2014 paid? BT BodyDrop \u00a31,562.74 (17 Sep) ref NPROB2S13513, \u00a36 plan (board had \u00a31,574.74). Do not double-count old BT invoice and collector balance.",
+      "source": "business/bodydrop/state.md; open-loops.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t052",
+      "column": "not_urgent",
+      "project": "bodydrop",
+      "title": "Meta token expired: Brad OS dashboards",
+      "note": "The system-user token expired 26 Jul, so the #all-brad-os dashboards are probably failing. Renew or retire.",
+      "source": "open-loops.md (bodydrop)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t053",
+      "column": "urgent",
+      "project": "tcbb",
+      "title": "iwoca Flexi-Loan: ~\u00a31,510, 459+ days overdue (+\u00a350/mo)",
+      "note": "thecoachesblueprint inbox. 2 Oct statement: 459 days overdue. Interest flat ~\u00a350.87/mo. Last Brad reply 28 Aug 2025. Ask: balance, personal guarantee (in writing), any legal action/assignment, address on file. Call 020 3778 0173.",
+      "source": "business/coaches-blueprint/state.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false
+    },
+    {
+      "id": "t054",
+      "column": "urgent",
+      "project": "tcbb",
+      "title": "thecoachesblueprint.co.uk: renew or retire (expired 25 Sep)",
+      "note": "GoDaddy: expired 25 Sep, parked. Brad@thecoachesblueprint.co.uk is a live connected mailbox \u2014 mail may bounce if it lapses. Checked 1 Oct: DNS still resolves (Cloudflare NS, Google Workspace MX) \u2014 probably registrar grace period. Confirm recovery cost, then renew or deliberately retire.",
+      "source": "open-loops.md (Claude Code); Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false
+    },
+    {
+      "id": "t055",
+      "column": "not_urgent",
+      "project": "tcbb",
+      "title": "Coaches Blueprint subscriptions failing",
+      "note": "Google Workspace failing since Aug, Basecamp frozen 6 Oct. Free Slack will delete content over 1 year old, so export what matters.",
+      "source": "business/coaches-blueprint/state.md",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t056",
+      "column": "done",
+      "project": "tcbb",
+      "title": "Christian's refund (owed out)",
+      "note": "Money panel only (22 Sep rule) \u2014 no daily guilt prompt. Confirm amount from original agreement + bank, repayments, next affordable date. Content/filming work is a separate card. | Brad: done 26 Oct.",
+      "source": "business/coaches-blueprint/state.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t057",
+      "column": "not_urgent",
+      "project": "tcbb",
+      "title": "Brooke: still active? Dashboard fixes",
+      "note": "445 GHL conversations / 31 missed (6 Oct). There's an open list of Operations Centre fixes. See also Brooke ads cards from Viktor merge (pixel/CAPI, WhatsApp, ad sets).",
+      "source": "business/coaches-blueprint/state.md; open-loops.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t058",
+      "column": "not_urgent",
+      "project": "personal",
+      "title": "Stephensons: TCM claim status (ref 587669.00001, ~$4,880)",
+      "note": "Email SNS@stephensons.co.uk (Sonia): was final demand sent, current status, recommended next funded step. Your email says $4,880; Stephensons put sterling total incl interest under \u00a34,000. LBA 22 May, disputed 29 May, 8 Jul offer of final demand (\u00a345+VAT). Tyler's TCM education debt is SEPARATE \u2014 do not merge.",
+      "source": "open-loops.md; personal/state.md; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t059",
+      "column": "not_urgent",
+      "project": "family",
+      "title": "Kyro nursery from Feb 2027 + UC childcare",
+      "note": "22 hrs, \u00a3299/mo after funding. Confirm the funding/30 hours and UC childcare (85%).",
+      "source": "open-loops.md (Family)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t060",
+      "column": "not_urgent",
+      "project": "agency",
+      "title": "Pick the agency name + secure the domain",
+      "note": "You're leaning towards 'Rix'; My Business Blueprint feels weak.",
+      "source": "open-loops.md (MBB)",
+      "due": null,
+      "dueText": null,
+      "done": false
+    },
+    {
+      "id": "t061",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Founding Five",
+      "note": "Parked by you. Not active.",
+      "source": "Chat (Bradley)",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t062",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Tiny Next Step app",
+      "note": "Specs done and repo created. Codex builds it in Expo when you say go.",
+      "source": "open-loops.md (Claude export)",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t063",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "RIXOS / Anchor OS / ADHD app",
+      "note": "Personal app builds. RIXOS first build at localhost:3050 ('not sure I like it yet').",
+      "source": "open-loops.md (Claude Code)",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t064",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Kyro's Logbook app",
+      "note": "Weaning module. Last build in progress 29 Jul.",
+      "source": "open-loops.md (Claude Code)",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t065",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Poppy AI power-user offer",
+      "note": "~12k credits for $4,000. Funds unsure.",
+      "source": "business/my-business-blueprint/state.md",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t066",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Office redesign, podcast studio, desk mounts",
+      "note": "Lifestyle wishlist.",
+      "source": "open-loops.md (Lifestyle)",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t067",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Q3 fun goals: Disneyland Paris, 125cc / CBT",
+      "note": "Review for Q4.",
+      "source": "open-loops.md (Lifestyle, Claude memory)",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t068",
+      "column": "done",
+      "project": "money",
+      "title": "Ooodles laptop \u00a3157.18 Direct Debit",
+      "note": "Paid ~12 Oct from Monzo.",
+      "source": "Task list (laptop-pay); finances/state.md",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t069",
+      "column": "done",
+      "project": "money",
+      "title": "Accounting On You \u00a3100 payment",
+      "note": "Went through 14 Oct.",
+      "source": "Monzo read-only check, 19 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t070",
+      "column": "done",
+      "project": "agency",
+      "title": "GoHighLevel \u00a3451.89",
+      "note": "Went through 14 Oct after your top-up (one later report disagrees).",
+      "source": "Monzo read-only check, 19 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t071",
+      "column": "done",
+      "project": "vault",
+      "title": "Data collection: all sources gathered",
+      "note": "ChatGPT, Claude, email, Slack, Drive, Mac, WhatsApp, Manus, Perplexity, Jack's 25 lessons, master open-loops list.",
+      "source": "bradley-context/*; open-loops.md",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t072",
+      "column": "done",
+      "project": "vault",
+      "title": "Draft vault built on Grok Bot's computer",
+      "note": "Rules, index, decisions, Hermes notes.",
+      "source": "hermes-setup-guide.html (Where we are today)",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t073",
+      "column": "done",
+      "project": "vault",
+      "title": "Hermes setup guide (11-page PDF)",
+      "note": "Step by step, including always-on options.",
+      "source": "guide/hermes-setup-guide.html",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t074",
+      "column": "done",
+      "project": "taki",
+      "title": "Taki Moore Clients course captured",
+      "note": "61 lessons, ~1,500 frames, 66 PDFs. Kept private.",
+      "source": "taki-moore/progress.md",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t075",
+      "column": "done",
+      "project": "monzo",
+      "title": "Monzo connected (read-only)",
+      "note": "Access refreshed until ~2pm Wed 21 Oct. Needs re-approving in the app about every 90 days.",
+      "source": "Chat 19 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t076",
+      "column": "todo",
+      "project": "agency",
+      "title": "RefinedBy: Nareman call done \u2014 keep working the project",
+      "note": "Call Thu 22 Oct happened; still working with them. Owed Looms/GPT/Skool copy status unsure \u2014 see t024.",
+      "source": "Google Calendar, 21 Oct; Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "order": null
+    },
+    {
+      "id": "t077",
+      "column": "urgent",
+      "order": 1,
+      "project": "money",
+      "title": "START HERE \u2014 CH instalments + HMRC Time to Pay + CMS call",
+      "note": "Do in this order today/tomorrow: (1) BodyDrop Companies House \u00a3750 instalments \u2014 email enquiries@companieshouse.gov.uk or 0303 1234 500 (ref A2006287, co 13321082). Do NOT pay online (full only). (2) HMRC Time to Pay 0300 200 3840 \u2014 CT ~\u00a36k + \u00a3400 penalty, ref 4482621021A00101A. (3) CMS 0800 171 2345 before Wed 28 Oct 10:00 hearing \u2014 arrears \u00a3720.07 + \u00a3300 charge, ref 121042963321. Then Zilch \u00a3675 by 29 Oct (t005).",
+      "source": "BodyDrop Emails + Money & Deadlines 26 Oct; Viktor export 26 Oct",
+      "due": "2026-10-26",
+      "dueText": "Today",
+      "done": false
+    },
+    {
+      "id": "t078",
+      "column": "urgent",
+      "project": "bodydrop",
+      "title": "Finish BodyDrop Finance Tracker queries (Katelyn)",
+      "note": "Green QUERIES columns only; upload receipts; send Got Capital / YouLend / Zable statements + personal SA records (asked 5 Sep \u2014 ask which tax year). \u00a38,058 BodyDrop-to-personal needs accountant classification. Tracker: https://docs.google.com/spreadsheets/d/1JL5kZvXr2-Iiq5hS7AsRcNt0wzH9tKHX/edit",
+      "source": "Katelyn 2 Oct; BodyDrop Emails 26 Oct; Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false,
+      "order": null
+    },
+    {
+      "id": "t079",
+      "done": false,
+      "column": "urgent",
+      "project": "money",
+      "title": "Confirm new MyBlueprint company email to Hannah (payroll)",
+      "note": "Hannah needs the new MyBlueprint company email for payroll setup. Reply on the payroll thread.",
+      "source": "Hannah 21 Oct; BodyDrop Emails 26 Oct",
+      "due": null,
+      "dueText": "This week"
+    },
+    {
+      "id": "t080",
+      "done": false,
+      "column": "urgent",
+      "project": "bodydrop",
+      "title": "Move BodyDrop Monzo traffic then tell Maria (dormancy \u00a345/mo)",
+      "note": "Once traffic is off BodyDrop Monzo, tell Maria so she can mark BodyDrop dormant (\u00a345/mo vs full). Related to winding BodyDrop down.",
+      "source": "AOU catch-up; BodyDrop Emails 26 Oct",
+      "due": null,
+      "dueText": "This week"
+    },
+    {
+      "id": "t081",
+      "column": "urgent",
+      "order": 6,
+      "project": "agency",
+      "done": false,
+      "title": "Kitchen AI (Gavin): invoice / take payment",
+      "note": "Brad confirmed 26 Oct: Gavin said yes to 16-week build; next step is invoice or take payment. Call already done; old Loom/Pixel/follow-up cards cleared. Viktor's 'Send KitchenAI agreement' card superseded \u2014 next step is invoice/take payment (Brad 26 Oct).",
+      "source": "Brad 26 Oct; Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week"
+    },
+    {
+      "id": "t082",
+      "column": "done",
+      "project": "kitchen",
+      "title": "Kitchen AI: send agreement + link \u2014 superseded by invoice",
+      "note": "Viktor sales card superseded. Brad 26 Oct: Gavin said yes; next step is invoice/take payment (t081).",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t083",
+      "column": "done",
+      "project": "agency",
+      "title": "RefinedBy: confirm Fri 2 Oct call \u2014 superseded (Nareman 22 Oct happened)",
+      "note": "Viktor TODAY card for Fri 2 Oct Calendly. Superseded: Nareman call Thu 22 Oct happened; still working (t076/t024).",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true
+    },
+    {
+      "id": "t084",
+      "column": "urgent",
+      "project": "money",
+      "title": "OOODLES laptop \u00a3471.54 (C001550): statement + payment route",
+      "note": "Balance per 11 Sep email. Oriel may be collecting the SAME account \u2014 match the ref before paying (not a second debt). Separate from Oodle car finance. Done = current balance, collector, payment date, proof. Note: \u00a3157.18 DD paid ~12 Oct (t068) may be part-payment \u2014 reconcile.",
+      "source": "Viktor export 26 Oct",
+      "due": "2026-10-02",
+      "dueText": "Overdue",
+      "done": false
+    },
+    {
+      "id": "t085",
+      "column": "done",
+      "project": "money",
+      "title": "Zable \u00a3968.97: confirm paid + debt-sheet line",
+      "note": "Sept statement \u00a3968.97; \u00a3150 reminder for 16 Sep. Old \u00a337.93 arrears is NOT extra. Add to Kaylee debt sheet. Keep separate from Oodle car finance. | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t086",
+      "column": "urgent",
+      "project": "money",
+      "title": "Debt sheet + credit file: one reconciled line per account",
+      "note": "Kaylee preps, you review. Checklist: (1) 9 credit-file accounts on sheet; (2) iwoca ~\u00a31,410 missing; (3) Lendable \u00a3941 missing; (4) dispute wrong name 'Bradley Steart M Rix'; (5) verify 3 possible BodyDrop CCJs. Match original creditor vs collector refs. Dated reminder figures, not verified balances.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false
+    },
+    {
+      "id": "t087",
+      "column": "urgent",
+      "project": "money",
+      "title": "Lowell DD + Lantern accounts: confirm debited / reconcile",
+      "note": "Lowell notice ref 484487467 was due 8 Oct \u2014 confirm amount, which account, money was there. Lantern M8750799 \u00a31,277.50 + Lending Stream M8791652 \u00a3590.86. One entry each on debt sheet. (Also summarised on t027.)",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false
+    },
+    {
+      "id": "t088",
+      "column": "todo",
+      "project": "money",
+      "title": "Moriarty (Cashplus/JCIA 157458487): clear ID mismatch + plan",
+      "note": "\u00a3299.39 on 3 Jul (dated). 9 Sep data-protection mismatch; 23 Sep acknowledgement with response window. Not settled.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": false
+    },
+    {
+      "id": "t089",
+      "column": "urgent",
+      "project": "money",
+      "title": "HMRC PAYE address fix so accountant gets agent access",
+      "note": "PAYE address doesn't update from Companies House; activation letter never arrived. Call HMRC using route in Hannah's 23 Sep email, update address, ask Hannah to reapply. Code sent securely \u2014 never in Slack. (Kaylee can do the call.)",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": false
+    },
+    {
+      "id": "t090",
+      "column": "delegating",
+      "project": "bodydrop",
+      "title": "Bully Boutique: approve dormant accounts + nil CT (YE 28.02.2026)",
+      "note": "Tia Brunt (Accounting On You) emailed draft accounts 14 Oct; will not file until you approve. Reply to her email with approval. Tia 07424 543150.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Awaiting you",
+      "done": false
+    },
+    {
+      "id": "t091",
+      "column": "done",
+      "project": "growthopia",
+      "title": "Growthopia: reconcile what you are owed (invoices + commission)",
+      "note": "PRIORITY over expansion. Face value INV-001 $4,325 + INV-002 $5,000 + INV-003 $1,500 = $10,825 \u2014 NOT a verified outstanding total. Need one schedule: invoiced/received/outstanding/disputed by currency + factual chase draft for your approval. Needs: invoice originals, contract + commission terms, bank receipts, won-deal evidence. | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t092",
+      "column": "done",
+      "project": "growthopia",
+      "title": "Growthopia exit: read agreement, pick exit date, min handover",
+      "note": "Find notice + post-termination commission clauses in the actual agreement (sales-management proposal is not proof of agreed terms). Handover: live deals, commitments, access. Keep recovery evidence. Get advice if terms disputed. | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t093",
+      "column": "done",
+      "project": "growthopia",
+      "title": "Growthopia leads: verify Chris/Rosie/Amy recaps, then triage",
+      "note": "'No outgoing email for 14 days' was WRONG \u2014 Close shows mail to Chris 25 Sep, Rosie 29 Sep, Amy 17+29 Sep. Check sent bodies vs promises; send only missing recaps (your approval). Then triage Michelle, Eric, Stephanie, Brett, Allen, Vlad, Lizzie, Justin, Carolina, Terence, Tara, Carlos Delzo, Neel: continue / hand over / waiting / close. Hemin is Disqualified \u2014 DO NOT chase. | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t094",
+      "column": "done",
+      "project": "growthopia",
+      "title": "Reconnect Growthopia Gmail to Viktor",
+      "note": "Broken since ~22 Sep. Needs your login on integrations page. After that Viktor backfills payment + client threads and proves with a recent read. | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "This week",
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t095",
+      "column": "todo",
+      "project": "brooke",
+      "title": "Brooke: check other ACTIVE ad sets outside masterclass",
+      "note": "Website Visitors 180d at \u00a325/day, 3x Advantage+ \u2014 confirm dormant or kill. Also match Brooke payments to invoices. 27 Sep report healthy (\u00a3243.49 spend, 100 leads, 7 calls, 12.08x ROAS) so keep reporting as is.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": false
+    },
+    {
+      "id": "t096",
+      "column": "todo",
+      "project": "brooke",
+      "title": "Brooke P1: automate WhatsApp messages (+ tell Brooke the cost)",
+      "note": "From OPEN LOOPS - BRAD + BROOKE doc, 25 Aug 2026.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": false
+    },
+    {
+      "id": "t097",
+      "column": "todo",
+      "project": "brooke",
+      "title": "Brooke P1: push rogue leads through WhatsApp",
+      "note": "From OPEN LOOPS - BRAD + BROOKE doc, 25 Aug 2026.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": false
+    },
+    {
+      "id": "t098",
+      "column": "todo",
+      "project": "brooke",
+      "title": "Brooke pixel + CAPI setup (~90 min)",
+      "note": "Guide: brad-os-513d4e.viktor.page/brooke-pixel-capi-setup",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": false
+    },
+    {
+      "id": "t099",
+      "column": "not_urgent",
+      "project": "brooke",
+      "title": "Brooke retargeting ads: build once tripwire-buyer CSV lands",
+      "note": "Reverse engineer lead \u2192 tripwire \u2192 further sales, then build retargeting audiences/creative.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Later",
+      "done": false
+    },
+    {
+      "id": "t100",
+      "column": "not_urgent",
+      "project": "brooke",
+      "title": "Brooke P4: turn retargeting back on + custom audiences",
+      "note": "From OPEN LOOPS - BRAD + BROOKE doc, 25 Aug 2026.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Later",
+      "done": false
+    },
+    {
+      "id": "t101",
+      "column": "not_urgent",
+      "project": "brooke",
+      "title": "Brooke P5: content subscription as order bump after tripwire",
+      "note": "From OPEN LOOPS - BRAD + BROOKE doc, 25 Aug 2026.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Later",
+      "done": false
+    },
+    {
+      "id": "t102",
+      "column": "done",
+      "project": "tcbb",
+      "title": "Christian: content links + next filming batch + Life Audit bits",
+      "note": "Confirm what is delivered, one folder index, next filming batch, Vistasocial/Basecamp access (promised 18 Sep), Tyler podcast intro + image crop. Check live Core Five Clarity quiz/PDF; add missing testimonials page + Book a Call; test PDF + booking. Refund is separate (t056). | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t103",
+      "column": "done",
+      "project": "agency",
+      "title": "Medlin: decide first offer + landing-page purpose + next deliverable",
+      "note": "Rielly (29 Sep) posted 4 Upwork demo Looms + assessment tool and asked: is demo site for an offer or the assessment tool? Answer that. Receipts already sent (t025). Confirm workspace migration. Answer doc: https://docs.google.com/document/d/1etiVl5FV1M4BYA6hXPGTh1VYMu4nmn2TUDGJDd0JwHk/edit | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t104",
+      "column": "not_urgent",
+      "project": "tcbb",
+      "title": "Tyler's 23 old Coach Ops rows: delivered or archive?",
+      "note": "Asana board state (20 May\u20138 Jun), not proof clients went unserved. Group by client, ask Tyler for evidence, fix real gaps, archive stale recurring rows.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Later",
+      "done": false
+    },
+    {
+      "id": "t105",
+      "column": "todo",
+      "project": "agency",
+      "title": "Send the proposal to Fog man",
+      "note": "Find last commitment + whether already sent. One concrete next action or archive. Asana also has unnamed pitch cards \u2014 same rule.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Next",
+      "done": false
+    },
+    {
+      "id": "t106",
+      "column": "not_urgent",
+      "project": "agency",
+      "title": "Agency model: pick ONE offer + audience + outreach test",
+      "note": "No longer blocked: mock site sent 25 Sep and reviewed. Comes AFTER Growthopia money + exit. Never built off Growthopia's pipeline.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Later",
+      "done": false
+    },
+    {
+      "id": "t107",
+      "column": "done",
+      "project": "tcbb",
+      "title": "Sort Christian's site out",
+      "note": "Possibly overlaps Life Audit / Core Five Clarity work. Clarify what 'site' means or merge with Christian content card. | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Later",
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t108",
+      "column": "not_urgent",
+      "project": "tcbb",
+      "title": "Everfit access check + Stripe payment alerts (if still needed)",
+      "note": "Tyler asked if Everfit was down 13 Jul, never answered. #new-payments silence doesn't mean no payments.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Later",
+      "done": false
+    },
+    {
+      "id": "t109",
+      "column": "urgent",
+      "project": "personal",
+      "title": "Personal subscriptions: keep/cancel before renewals",
+      "note": "Boards \u00a39.99 (was 24 Oct), MEGA \u00a38.99 (27 Oct), YouTube \u00a316.99 (29 Oct), Tony Robbins AI \u00a339 (31 Oct). Check Headspace/Life360/Yubo ownership. Apple subs on bradley_rix@live.com.",
+      "source": "Viktor export 26 Oct",
+      "due": "2026-10-27",
+      "dueText": "This week",
+      "done": false
+    },
+    {
+      "id": "t110",
+      "column": "not_urgent",
+      "project": "personal",
+      "title": "Export Mac Chrome tabs + Desktop journals/AutoTrader PDF for Viktor",
+      "note": "Neither assistant can see your local Mac. Paste a tab export (title + URL) when next at it; Viktor sorts into action / reference / parked.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": "Later",
+      "done": false
+    },
+    {
+      "id": "t111",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Find Sukh course on email launches",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t112",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Build own task app to replace Asana (Next.js + Supabase + Vercel, then PWA)",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t113",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Download Tony Robbins books for the AI recreation project",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t114",
+      "column": "done",
+      "project": "parked",
+      "title": "Growthopia setter + closer SOPs (Sendblue, iClosed, Close CRM)",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go. | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t115",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Send Viktor the Jeremy Haynes SOPs + the 5 key Nikola voice notes",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t116",
+      "column": "done",
+      "project": "parked",
+      "title": "Growthopia KPI tracker + Slack alerts \u2014 decide go/no-go",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go. | Brad: done 26 Oct.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": true,
+      "order": null
+    },
+    {
+      "id": "t117",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Close: add a Confirmed stage (between Demo Call Booked and Completed)",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t118",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Close: keep no-show and both reschedule outcomes as stages, not statuses",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t119",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Close: move Long-Term Follow Up into its own Nurture pipeline with wake-up date",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t120",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Close: auto-drop leads to Nurture after 21 days no activity",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t121",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Close: demote lead statuses to segments only (industry, DNC, customer)",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t122",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Close: build the mandatory note template",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t123",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Close: make the intake rule explicit (form \u2192 Potential / Qualified / Disqualified)",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t124",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "GHL: rebuild the hammer-them email sequence properly",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t125",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "GHL: fix inbound email replies not surfacing anywhere",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t126",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "GHL: stop reminders firing for cancelled calls (10-min and 1-hour Zoom)",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t127",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Connect GoHighLevel to Viktor",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t128",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Zapier: screenshot the Zap list for the audit",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t129",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Zapier: fix the contactId is missing error",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t130",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Zapier: rename every Zap [Source] \u2192 [Target]: event",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t131",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "KPI: calls booked per day",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t132",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "KPI: showed / no-showed / cancelled",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t133",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "KPI: cancelled by lead vs cancelled by closer, split",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t134",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "KPI: per-rep breakdown",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t135",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "KPI: cross-reference against rep self-reported numbers",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t136",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "KPI: pull Sendblue analytics daily into the dashboard",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t137",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "KPI: sales count sourced from the Whop fire sequence",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t138",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Drag Confirmed + Cancelled by Lead into position in Close UI",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t139",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Get all closers to record the intro video + add to GHL automation",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t140",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Fix speed-to-lead tracking: dedicated number for Sendblue automations",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t141",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Write the follow-up value email sequence",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t142",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Get Close CRM to bulk-delete the 2000+ duplicate contacts",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t143",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Set up Fathom to auto-push call notes + summary into Close CRM",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t144",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Create the free-for-all pipeline in Close for leads older than 2-3 weeks",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t145",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Add a video to the Zoom waiting room + a cameras-on policy",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t146",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Rebuild the payment links Slack channel with one pinned message",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t147",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Refresh the bodydrop-api plugin credentials.json (expired ~28 May)",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    },
+    {
+      "id": "t148",
+      "column": "not_urgent",
+      "project": "parked",
+      "title": "Tell Viktor when BodyDrop ads are back on (unpause ads reports)",
+      "note": "Parked from Viktor open-tasks export 26 Oct. Revive only if Brad says go.",
+      "source": "Viktor export 26 Oct",
+      "due": null,
+      "dueText": null,
+      "done": false,
+      "parked": true
+    }
+  ],
+  "sync": {
+    "backend": "supabase",
+    "project": "bodydrop-lifeos"
+  }
+}</script>
+<script>
+const KEY='brad-board-v16';
+const UIKEY=KEY+'-ui';
+const SB_URL='https://ljwzyqbskzlbtawwgrgn.supabase.co';
+const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqd3p5cWJza3psYnRhd3dncmduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwOTEyMDcsImV4cCI6MjA5NjY2NzIwN30.QVlZjGbL-wpHw8FLQTG1Q_g73nbQrx-rrOqN7sSDkGI';
+const ROW_ID='main';
+const SEED=JSON.parse(document.getElementById('seed').textContent);
+const STAGE_LABEL={urgent:'Urgent',todo:'To do',doing:'Doing',delegating:'Delegating',not_urgent:'Not urgent',done:'Done'};
+const PIPE_STAGES=['urgent','todo','doing','delegating','not_urgent','done'];
+const MOVE_TO=PIPE_STAGES;
+const MIGRATE={focus:'urgent',week:'urgent',next:'todo',later:'not_urgent',others:'not_urgent',approval:'delegating',parked:'not_urgent',done:'done'};
+function migrate(s){s.columns=PIPE_STAGES.map(id=>({id,name:STAGE_LABEL[id]}));(s.tasks||[]).forEach(t=>{let c=t.column||'todo';if(c==='parked')t.parked=true;if(!STAGE_LABEL[c])t.column=MIGRATE[c]||'todo';if(t.prevColumn&&!STAGE_LABEL[t.prevColumn])t.prevColumn=MIGRATE[t.prevColumn]||'todo';if(t.done)t.column='done'});return s}
+
+const sb = (window.supabase && supabase.createClient)
+  ? supabase.createClient(SB_URL, SB_ANON, {auth:{persistSession:false,autoRefreshToken:false}})
+  : null;
+
+let S=migrate(JSON.parse(JSON.stringify(SEED)));
+let UI=loadUI();
+let editing=null;
+let openMenu=null;
+let q='';
+let syncState='offline'; // synced | saving | offline
+let saveTimer=null;
+let applyingRemote=false;
+let lastRemoteSig='';
+let bootDone=false;
+const TODAY=new Date(new Date().toDateString());
+
+function cacheLocal(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function loadCached(){
+ try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.tasks)return migrate(s)}catch(e){}
+ return null;
+}
+function setSync(state,label){
+ syncState=state;
+ const el=$('syncPill');if(!el)return;
+ el.className='sync-pill '+(state==='synced'?'ok':state==='saving'?'busy':'err');
+ el.textContent=label||(state==='synced'?'Synced':state==='saving'?'Saving…':'Offline');
+}
+function boardSig(s){
+ try{return JSON.stringify({u:s.updatedAt||null,n:(s.tasks||[]).length,asks:(s.tasks||[]).filter(t=>t.ask).map(t=>({id:t.id,st:t.ask.status,at:t.ask.at,aa:t.ask.answeredAt,tx:(t.ask.text||'').slice(0,40),an:(t.ask.answer||'').slice(0,40)}))})}catch(e){return String(Date.now())}
+}
+function openAsks(){
+ return (S.tasks||[]).filter(t=>t.ask&&t.ask.status==='open'&&t.ask.text).map(t=>({
+  id:t.id,title:t.title,project:t.project,column:t.column,ask:t.ask
+ }));
+}
+function save(opts){
+ const force=opts&&opts.force;
+ cacheLocal();
+ if(applyingRemote&&!force)return;
+ setSync('saving');
+ clearTimeout(saveTimer);
+ saveTimer=setTimeout(pushRemote,400);
+}
+async function pushRemote(){
+ if(!sb){setSync('offline','Offline');return}
+ try{
+  const payload={id:ROW_ID,data:S,updated_at:new Date().toISOString(),updated_by:'brad'};
+  const {error}=await sb.from('brad_board_state').upsert(payload,{onConflict:'id'});
+  if(error)throw error;
+  lastRemoteSig=boardSig(S);
+  setSync('synced');
+ }catch(e){
+  console.warn('push failed',e);
+  setSync('offline','Offline — retrying');
+  setTimeout(pushRemote,5000);
+ }
+}
+async function pullRemote(opts){
+ const silent=opts&&opts.silent;
+ if(!sb){setSync('offline');return false}
+ try{
+  if(!silent)setSync('saving','Loading…');
+  const {data,error}=await sb.from('brad_board_state').select('data,updated_at,updated_by').eq('id',ROW_ID).maybeSingle();
+  if(error)throw error;
+  if(data&&data.data&&data.data.tasks){
+   const next=migrate(data.data);
+   const sig=boardSig(next);
+   if(sig!==lastRemoteSig){
+    applyingRemote=true;
+    S=next;
+    lastRemoteSig=sig;
+    cacheLocal();
+    render();
+    applyingRemote=false;
+   }
+   setSync('synced');
+   return true;
+  }
+  // no row yet — push seed
+  await pushRemote();
+  return true;
+ }catch(e){
+  console.warn('pull failed',e);
+  setSync('offline','Offline');
+  return false;
+ }
+}
+function subscribeRemote(){
+ if(!sb)return;
+ try{
+  sb.channel('brad-board-live')
+   .on('postgres_changes',{event:'*',schema:'public',table:'brad_board_state',filter:'id=eq.main'},payload=>{
+    const row=payload.new||{};
+    if(!row.data||!row.data.tasks)return;
+    if(row.updated_by==='brad'&&syncState==='saving')return;
+    const next=migrate(row.data);
+    const sig=boardSig(next);
+    if(sig===lastRemoteSig)return;
+    applyingRemote=true;
+    S=next;lastRemoteSig=sig;cacheLocal();render();
+    applyingRemote=false;
+    setSync('synced','Synced');
+   })
+   .subscribe((status)=>{
+    if(status==='SUBSCRIBED'){/* keep */}
+   });
+ }catch(e){console.warn('realtime',e)}
+ // polling fallback every 18s
+ setInterval(()=>{if(document.visibilityState==='visible')pullRemote({silent:true})},18000);
+}
+
+function loadUI(){
+ const d={hideDone:true,showParked:false,view:'board',project:null};
+ try{const u=JSON.parse(localStorage.getItem(UIKEY));if(u)return Object.assign(d,u)}catch(e){}
+ return d;
+}
+function saveUI(){localStorage.setItem(UIKEY,JSON.stringify(UI))}
+const $=id=>document.getElementById(id);
+function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function colName(id){const c=(S.columns||[]).find(x=>x.id===id);return c?c.name:(STAGE_LABEL[id]||id)}
+function fmtDue(t){
+ if(t.due){const d=new Date(t.due+'T00:00:00');const diff=Math.round((d-TODAY)/864e5);
+  const lab=d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+  let cls='due';if(diff<=0&&!t.done)cls+=' today';else if(diff<=7&&!t.done)cls+=' soon';
+  const rel=t.done?'':diff===0?' · today':diff<0?' · overdue':diff===1?' · tomorrow':diff<=14?` · ${diff}d`:'';
+  return `<span class="${cls}">${lab}${rel}</span>`}
+ if(t.dueText)return `<span class="due">${esc(t.dueText)}</span>`;return '';
+}
+function matchesQ(t){
+ if(!q)return true;
+ const hay=(t.title+' '+(t.note||'')+' '+(t.source||'')+' '+(t.project||'')+' '+((t.ask&&t.ask.text)||'')+' '+((t.ask&&t.ask.answer)||'')).toLowerCase();
+ return hay.includes(q);
+}
+function matchesProject(t){
+ if(!UI.project)return true;
+ return t.project===UI.project;
+}
+function matchesToggles(t){
+ if(UI.hideDone&&(t.done||t.column==='done'))return false;
+ if(!UI.showParked&&t.parked&&!t.done)return false;
+ return true;
+}
+function visible(t){return matchesProject(t)&&matchesToggles(t)&&matchesQ(t)}
+
+function moveTask(t,col){
+ if(!t)return;
+ if(col==='done'){if(!t.done){t.prevColumn=t.column;t.done=true}t.column='done'}
+ else{t.column=col;t.done=false}
+ save();render();
+}
+
+function card(t){
+ const p=S.projects[t.project]||{name:t.project,color:'#666'};
+ const st=t.column||'todo';
+ const askOpen=t.ask&&t.ask.status==='open'&&t.ask.text;
+ const askAns=t.ask&&t.ask.status==='answered'&&t.ask.text;
+ return `<div class="card ${t.done||st==='done'?'isdone':''} ${askOpen?'ask-open':''} ${askAns?'ask-answered':''}" draggable="true" data-id="${t.id}">
+  <div class="card-tools">
+   <button type="button" data-ask="${t.id}" title="Ask Brad OS">Ask</button>
+   <button type="button" data-menu="${t.id}" title="Move / more">⋯</button>
+   <button type="button" data-edit="${t.id}" title="Edit">Edit</button>
+  </div>
+  <div class="top"><button class="tick" data-tick="${t.id}" title="Mark done"></button><div class="title">${esc(t.title)}</div></div>
+  <div class="meta">
+   <span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color}"></span>
+   <span class="tag" style="background:${p.color}22;color:${p.color};border:1px solid ${p.color}55">${esc(p.name)}</span>
+   <span class="stage stage-${st}">${esc(STAGE_LABEL[st]||st)}</span>
+   ${askOpen?'<span class="ask-badge">ASK</span>':''}
+   ${askAns?'<span class="ask-badge answered">ANSWERED</span>':''}
+   ${fmtDue(t)}
+  </div>
+  ${t.note?`<div class="note">${esc(t.note)}</div>`:''}
+  ${askOpen?`<div class="ask-preview"><div class="lab">Open ask</div>${esc(t.ask.text)}</div>`:''}
+  ${askAns?`<div class="ask-preview answered"><div class="lab">Ask · answered</div>${esc(t.ask.text)}${t.ask.answer?`<div class="ans">${esc(t.ask.answer)}</div>`:''}</div>`:''}
+  ${t.source?`<div class="src">Source: ${esc(t.source)}</div>`:''}
+ </div>`;
+}
+
+function renderToggles(){
+ $('toggles').querySelectorAll('[data-tog]').forEach(el=>{
+  const k=el.dataset.tog;
+  el.classList.toggle('on',!!UI[k]);
+ });
+ document.querySelectorAll('#viewSeg [data-view]').forEach(b=>{
+  b.classList.toggle('on',b.dataset.view===UI.view);
+ });
+}
+
+function renderFilters(){
+ const P=S.projects;
+ const counts={};
+ S.tasks.forEach(t=>{
+  if(t.done||t.column==='done')return;
+  if(t.parked&&!UI.showParked)return;
+  counts[t.project]=(counts[t.project]||0)+1;
+ });
+ const openAll=S.tasks.filter(t=>!t.done&&t.column!=='done'&&(UI.showParked||!t.parked)).length;
+ let html=`<span class="chip ${!UI.project?'on':''}" data-p="">All <span class="n">${openAll}</span></span>`;
+ html+=Object.entries(P).map(([k,v])=>{
+  const n=counts[k]||0;
+  return `<span class="chip ${UI.project===k?'on':''}" data-p="${k}" title="Open ${esc(v.name)} pipeline"><span class="dot" style="background:${v.color}"></span>${esc(v.name)} <span class="n">${n}</span></span>`;
+ }).join('');
+ $('filters').innerHTML=html;
+}
+
+function boardColumns(){
+ return (S.columns||[]).filter(c=>{
+  if(c.id==='done'&&UI.hideDone)return false;
+  return true;
+ });
+}
+
+function pipeColumns(){
+ return PIPE_STAGES.filter(id=>!(id==='done'&&UI.hideDone)).map(id=>({id,name:STAGE_LABEL[id]}));
+}
+
+function render(){
+ renderToggles();
+ renderFilters();
+ const open=S.tasks.filter(t=>t.column!=='done'&&!t.parked&&!t.done).length;
+ const wk=S.tasks.filter(t=>t.column==='urgent'&&!t.done).length;
+ const asks=openAsks().length;
+ const answered=(S.tasks||[]).filter(t=>t.ask&&t.ask.status==='answered').length;
+ let sub=`${open} open · ${wk} urgent`;
+ if(asks)sub+=` · ${asks} ask${asks===1?'':'s'}`;
+ if(answered)sub+=` · ${answered} answered`;
+ $('sub').textContent=sub;
+
+ const isPipe=UI.view==='pipeline';
+ $('pipeBar').classList.toggle('show',isPipe);
+ if(isPipe){
+  const pname=UI.project?(S.projects[UI.project]?.name||UI.project):'All open';
+  $('pipeTitle').innerHTML=`Pipeline: ${esc(pname)} <span class="hint">drag cards between stages</span>`;
+ }
+
+ const cols=isPipe?pipeColumns():boardColumns();
+ $('board').innerHTML=cols.map(c=>{
+  const ts=S.tasks.filter(t=>t.column===c.id&&visible(t)).sort((a,b)=>(a.order??0)-(b.order??0));
+  const body=ts.length?ts.map(card).join(''):`<div class="empty">Drop cards here</div>`;
+  return `<section class="col ${c.id}"><h2>${esc(c.name)}<span class="cnt">${ts.length}</span><button class="add" data-add="${c.id}" title="Add card">+</button></h2>
+  <div class="list" data-col="${c.id}">${body}</div></section>`;
+ }).join('');
+ openMenu=null;
+ saveUI();
+}
+
+document.addEventListener('click',e=>{
+ if(openMenu&&!e.target.closest('.menu')&&!e.target.closest('[data-menu]')){
+  document.querySelectorAll('.menu').forEach(m=>m.remove());
+  document.querySelectorAll('.menu-open').forEach(c=>c.classList.remove('menu-open'));
+  openMenu=null;
+ }
+
+ const tog=e.target.closest('[data-tog]');
+ if(tog){
+  const k=tog.dataset.tog;
+  UI[k]=!UI[k];
+  saveUI();render();return;
+ }
+
+ const vb=e.target.closest('#viewSeg [data-view]');
+ if(vb){
+  UI.view=vb.dataset.view;
+  saveUI();render();return;
+ }
+
+ if(e.target.closest('#exitPipe')){
+  UI.view='board';UI.project=null;saveUI();render();return;
+ }
+
+ const f=e.target.closest('.chip[data-p]');
+ if(f&&!f.dataset.tog){
+  const p=f.dataset.p;
+  if(!p){
+   UI.project=null;
+  }else if(UI.project===p&&UI.view==='pipeline'){
+   UI.view='board';UI.project=null;
+  }else{
+   UI.project=p;
+   UI.view='pipeline';
+  }
+  saveUI();render();return;
+ }
+
+ const tk=e.target.closest('[data-tick]');
+ if(tk){
+  const t=S.tasks.find(x=>x.id===tk.dataset.tick);
+  if(!t)return;
+  t.done=!t.done;
+  if(t.done){t.prevColumn=t.column;t.column='done'}
+  else{t.column=t.prevColumn&&t.prevColumn!=='done'?t.prevColumn:'todo'}
+  save();render();return;
+ }
+
+ const askb=e.target.closest('[data-ask]');
+ if(askb){openAskModal(S.tasks.find(x=>x.id===askb.dataset.ask));return}
+
+ const ed=e.target.closest('[data-edit]');
+ if(ed){openModal(S.tasks.find(x=>x.id===ed.dataset.edit));return}
+
+ const ad=e.target.closest('[data-add]');
+ if(ad){openModal(null,ad.dataset.add);return}
+
+ const mb=e.target.closest('[data-menu]');
+ if(mb){
+  e.stopPropagation();
+  const id=mb.dataset.menu;
+  const cardEl=mb.closest('.card');
+  document.querySelectorAll('.menu').forEach(m=>m.remove());
+  document.querySelectorAll('.menu-open').forEach(c=>c.classList.remove('menu-open'));
+  if(openMenu===id){openMenu=null;return}
+  openMenu=id;
+  cardEl.classList.add('menu-open');
+  const t=S.tasks.find(x=>x.id===id);
+  const menu=document.createElement('div');
+  menu.className='menu';
+  menu.innerHTML=`<div class="lab">Move to</div>`+
+   MOVE_TO.map(c=>`<button type="button" data-move="${c}" ${t&&t.column===c?'style="color:var(--ac)"':''}>${esc(STAGE_LABEL[c]||c)}</button>`).join('')+
+   `<div class="sep"></div><button type="button" data-ask="${id}">Ask Brad OS…</button><button type="button" data-edit="${id}">Edit details…</button>`;
+  cardEl.appendChild(menu);
+  return;
+ }
+
+ const mv=e.target.closest('[data-move]');
+ if(mv){
+  const cardEl=mv.closest('.card');
+  const t=S.tasks.find(x=>x.id===cardEl.dataset.id);
+  moveTask(t,mv.dataset.move);return;
+ }
+});
+
+$('q').oninput=e=>{q=e.target.value.toLowerCase().trim();render()};
+$('addBtn').onclick=()=>openModal(null,UI.view==='pipeline'?'urgent':'todo');
+
+function openModal(t,col){
+ editing=t;
+ $('mt').textContent=t?'Edit card':'New card';
+ $('f_project').innerHTML=Object.entries(S.projects).map(([k,v])=>`<option value="${k}">${esc(v.name)}</option>`).join('');
+ $('f_column').innerHTML=(S.columns||[]).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+ $('f_title').value=t?t.title:'';
+ $('f_project').value=t?t.project:(UI.project||'money');
+ $('f_column').value=t?t.column:(col||'todo');
+ $('f_due').value=t&&t.due||'';
+ $('f_dueText').value=t&&t.dueText||'';
+ $('f_note').value=t?t.note||'':'';
+ $('f_source').value=t?t.source||'':'Added by Bradley';
+ $('delBtn').style.display=t?'':'none';
+ $('ov').classList.add('show');
+ setTimeout(()=>$('f_title').focus(),0);
+}
+function closeModal(){$('ov').classList.remove('show');editing=null}
+$('canBtn').onclick=closeModal;
+$('ov').onclick=e=>{if(e.target.id==='ov')closeModal()};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeAskModal();document.querySelectorAll('.menu').forEach(m=>m.remove())}});
+
+$('saveBtn').onclick=()=>{
+ const v={title:$('f_title').value.trim(),project:$('f_project').value,column:$('f_column').value,
+  due:$('f_due').value||null,dueText:$('f_dueText').value.trim()||null,note:$('f_note').value.trim(),source:$('f_source').value.trim()};
+ if(!v.title){$('f_title').focus();return}
+ v.done=v.column==='done';
+ if(editing)Object.assign(editing,v);
+ else S.tasks.push({id:'u'+Date.now().toString(36),...v,order:-Date.now()});
+ save();closeModal();render();
+};
+$('delBtn').onclick=()=>{if(editing&&confirm('Delete this card?')){S.tasks=S.tasks.filter(t=>t!==editing);save();closeModal();render()}};
+$('expBtn').onclick=()=>{
+ const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(b);a.download='brad-board-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);
+};
+
+let askingId=null;
+function openAskModal(t){
+ if(!t)return;
+ askingId=t.id;
+ const answered=t.ask&&t.ask.status==='answered';
+ $('askMt').textContent=answered?'Ask · answered':'Ask Brad OS';
+ $('askCardTitle').textContent=t.title||'';
+ $('f_ask').value=(t.ask&&t.ask.text)||'';
+ $('f_ask').readOnly=!!answered;
+ $('askSaveBtn').style.display=answered?'none':'';
+ $('askClearBtn').style.display=(t.ask&&t.ask.text)?'':'none';
+ if(answered&&t.ask.answer){
+  $('askAnswerBox').style.display='';
+  $('askAnswerText').textContent=t.ask.answer;
+ }else{
+  $('askAnswerBox').style.display='none';
+  $('askAnswerText').textContent='';
+ }
+ $('askOv').classList.add('show');
+ if(!answered)setTimeout(()=>$('f_ask').focus(),0);
+}
+function closeAskModal(){$('askOv').classList.remove('show');askingId=null;$('f_ask').readOnly=false;$('askSaveBtn').style.display=''}
+function saveAskFromModal(){
+ const t=S.tasks.find(x=>x.id===askingId);if(!t)return;
+ const text=$('f_ask').value.trim();
+ if(!text){$('f_ask').focus();return}
+ t.ask={text,at:new Date().toISOString(),status:'open'};
+ save();closeAskModal();render();
+}
+function clearAskFromModal(){
+ const t=S.tasks.find(x=>x.id===askingId);if(!t)return;
+ if(t.ask){t.ask={...t.ask,status:'cleared',clearedAt:new Date().toISOString()}}
+ save();closeAskModal();render();
+}
+$('askCanBtn').onclick=closeAskModal;
+$('askSaveBtn').onclick=saveAskFromModal;
+$('askClearBtn').onclick=clearAskFromModal;
+$('askOv').onclick=e=>{if(e.target.id==='askOv')closeAskModal()};
+
+$('imp').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ f.text().then(t=>{try{const d=JSON.parse(t);if(!d.tasks||!d.columns)throw 0;S=migrate(d);save({force:true});render()}catch(x){alert('That file is not a board export.')}});
+ e.target.value='';
+};
+$('resetBtn').onclick=async ()=>{
+ if(!confirm('Reload the board from the live server? Unsaved local-only edits may be lost.'))return;
+ setSync('saving','Loading…');
+ const ok=await pullRemote();
+ if(!ok){
+  const cached=loadCached();
+  if(cached){S=cached;render()}
+  alert('Could not reach live server. Showing cache/seed.');
+ }
+};
+
+let dragId=null;
+document.addEventListener('dragstart',e=>{
+ const c=e.target.closest('.card');if(!c)return;
+ dragId=c.dataset.id;c.classList.add('dragging');
+ e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',dragId);
+});
+document.addEventListener('dragend',e=>{
+ document.querySelectorAll('.dragging').forEach(x=>x.classList.remove('dragging'));
+ document.querySelectorAll('.over').forEach(x=>x.classList.remove('over'));
+});
+document.addEventListener('dragover',e=>{
+ const l=e.target.closest('.list');if(!l)return;
+ e.preventDefault();
+ document.querySelectorAll('.over').forEach(x=>x!==l&&x.classList.remove('over'));
+ l.classList.add('over');
+});
+document.addEventListener('drop',e=>{
+ const l=e.target.closest('.list');if(!l||!dragId)return;e.preventDefault();
+ const t=S.tasks.find(x=>x.id===dragId);if(!t)return;
+ const col=l.dataset.col;
+ const cards=[...l.querySelectorAll('.card:not(.dragging)')];
+ const after=cards.find(c=>{const r=c.getBoundingClientRect();return e.clientY<r.top+r.height/2});
+ const ids=cards.map(c=>c.dataset.id);const idx=after?ids.indexOf(after.dataset.id):ids.length;
+ ids.splice(idx,0,dragId);
+ t.column=col;t.done=(col==='done');
+ ids.forEach((id,i)=>{const x=S.tasks.find(y=>y.id===id);if(x)x.order=i});
+ dragId=null;save();render();
+});
+
+(async function boot(){
+ const cached=loadCached();
+ if(cached){S=cached}
+ render();
+ const ok=await pullRemote();
+ if(!ok&&!cached){S=migrate(JSON.parse(JSON.stringify(SEED)));cacheLocal();render()}
+ subscribeRemote();
+ bootDone=true;
+})();
+</script>
+</body></html>
