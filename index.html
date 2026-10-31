@@ -416,6 +416,15 @@ function pipeColumns(){
 }
 
 function render(){
+ const _sc={win:[window.scrollX,window.scrollY],main:null,lists:{},els:[]};
+ const _b=$('board');if(_b){_sc.main=[_b.scrollLeft,_b.scrollTop];_b.querySelectorAll('.list[data-col]').forEach(l=>{_sc.lists[l.dataset.col]=l.scrollTop});_b.querySelectorAll('.col').forEach((c,i)=>{_sc.els[i]=c.scrollTop});}
+ try{_render()}finally{
+  const b=$('board');
+  if(b){b.querySelectorAll('.list[data-col]').forEach(l=>{const v=_sc.lists[l.dataset.col];if(v!=null)l.scrollTop=v});b.querySelectorAll('.col').forEach((c,i)=>{if(_sc.els[i])c.scrollTop=_sc.els[i]});if(_sc.main){b.scrollLeft=_sc.main[0];b.scrollTop=_sc.main[1]}}
+  window.scrollTo(_sc.win[0],_sc.win[1]);
+ }
+}
+function _render(){
  renderToggles();
  renderFilters();
  const open=S.tasks.filter(t=>t.column!=='done'&&!t.parked&&!t.done).length;
