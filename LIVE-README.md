@@ -1,8 +1,12 @@
-# Brad's Board — Live (v17)
+# Brad's Board — Live (v18)
 
 ## Live URL (bookmark this)
 
 **https://brad731.github.io/brad-board/**
+
+Grok Bot Tasks (its own page): **https://brad731.github.io/brad-board/grok-tasks.html**
+
+Views: Board, Pipeline, and List (title, status, priority, due, owner). Board and Pipeline use the same six columns; List is the compact table view.
 
 GitHub Pages hosts the interactive HTML (Supabase cannot serve runnable HTML — they force `text/html` → `text/plain` + CSP sandbox on Storage and Edge Functions).
 
@@ -126,14 +130,15 @@ After editing `/workspace/taskboard/template.html` + rebuilding `board.html`:
 # 1) Rebuild board.html from template + seed
 # 2) Push to GitHub Pages:
 cp /workspace/taskboard/board.html /tmp/brad-board-pages/index.html
-cd /tmp/brad-board-pages && git add index.html && git commit -m "board update" && git push
+cp /workspace/taskboard/board.html /tmp/brad-board-pages/grok-tasks.html
+cd /tmp/brad-board-pages && git add index.html grok-tasks.html && git commit -m "board update" && git push
 # 3) Optional: refresh edge embed + storage copy
 #    rebuild board_html.ts, deploy_edge_function, then GET ?api=publish
 ```
 
 ## Local files
 
-- `/workspace/taskboard/board.html` — v17 board
+- `/workspace/taskboard/board.html` — v18 board (index + grok-tasks.html)
 - `/workspace/taskboard/template.html` — `__DATA__` placeholder
 - `/workspace/taskboard/live/index.html` — copy
 - `/workspace/taskboard/brad-board-live-seed.json` — seed
